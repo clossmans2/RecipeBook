@@ -12,7 +12,7 @@ namespace RecipeBook.Data
         public RecipeBookContext CreateDbContext()
         {
             var builder = new DbContextOptionsBuilder<RecipeBookContext>();
-            builder.UseSqlServer("Data Source=0353L-GZW7KL3;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False");
+            builder.UseSqlServer("Data Source=0353L-GZW7KL3;Initial Catalog=RecipeBook;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False");
             return new RecipeBookContext(builder.Options);
         }
     }

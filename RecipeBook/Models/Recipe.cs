@@ -20,5 +20,6 @@ namespace RecipeBook.Models
         
         [ForeignKey("AuthorId")]
         public Author Author { get; set; }
+
     }
 }
