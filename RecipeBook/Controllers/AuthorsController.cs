@@ -65,14 +65,19 @@ namespace RecipeBook.Controllers
         // PUT: api/Authors/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutAuthor(int id, Author author)
+        public async Task<IActionResult> PutAuthor(int id, AuthorDTO authorDto)
         {
-            if (id != author.Id)
+            if (id != authorDto.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(author).State = EntityState.Modified;
+            var author = await _context.Authors.FindAsync(id);
+            author.FirstName = authorDto.FirstName;
+            author.LastName = authorDto.LastName;
+            author.Email = authorDto.Email;
+
+            //_context.Entry(author).State = EntityState.Modified;
 
             try
             {
@@ -96,16 +101,24 @@ namespace RecipeBook.Controllers
         // POST: api/Authors
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Author>> PostAuthor(Author author)
+        public async Task<ActionResult<AuthorDetailDTO>> PostAuthor(AuthorDTO authorDto)
         {
           if (_context.Authors == null)
           {
               return Problem("Entity set 'RecipeBookContext.Authors'  is null.");
           }
+            var author = new Author
+            {
+                FirstName = authorDto.FirstName,
+                LastName = authorDto.LastName,
+                Email = authorDto.Email
+            };
             _context.Authors.Add(author);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetAuthor", new { id = author.Id }, author);
+            var authorDetailDto = AuthorDetailDTO.GetAuthorDetail(author, author.Recipes);
+
+            return CreatedAtAction("GetAuthor", new { id = authorDetailDto.Id }, authorDetailDto);
         }
 
         // DELETE: api/Authors/5

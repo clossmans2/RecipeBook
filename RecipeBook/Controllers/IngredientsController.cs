@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RecipeBook.Data;
+using RecipeBook.DTO;
 using RecipeBook.Models;
 
 namespace RecipeBook.Controllers
@@ -23,23 +24,31 @@ namespace RecipeBook.Controllers
 
         // GET: api/Ingredients
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Ingredient>>> GetIngredients()
+        public async Task<ActionResult<IEnumerable<IngredientDTO>>> GetIngredients()
         {
           if (_context.Ingredients == null)
           {
               return NotFound();
           }
-            return await _context.Ingredients.ToListAsync();
+            var ingreds = await _context.Ingredients.ToListAsync();
+            var ingredDTOs = new List<IngredientDTO>();
+            foreach (var ingred in ingreds)
+            {
+                var iDto = IngredientDTO.GetIngredientDTO(ingred);
+                ingredDTOs.Add(iDto);
+            }
+
+            return ingredDTOs;
         }
 
         // GET: api/Ingredients/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Ingredient>> GetIngredient(int id)
+        public async Task<ActionResult<IngredientDTO>> GetIngredient(int id)
         {
-          if (_context.Ingredients == null)
-          {
-              return NotFound();
-          }
+            if (_context.Ingredients == null)
+            {
+                return NotFound();
+            }
             var ingredient = await _context.Ingredients.FindAsync(id);
 
             if (ingredient == null)
@@ -47,20 +56,28 @@ namespace RecipeBook.Controllers
                 return NotFound();
             }
 
-            return ingredient;
+            var iDto = IngredientDTO.GetIngredientDTO(ingredient);
+
+            return iDto;
         }
 
         // PUT: api/Ingredients/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutIngredient(int id, Ingredient ingredient)
+        public async Task<IActionResult> PutIngredient(int id, IngredientDTO ingredient)
         {
             if (id != ingredient.Id)
             {
                 return BadRequest();
             }
-
-            _context.Entry(ingredient).State = EntityState.Modified;
+            var ingred = new Ingredient
+            {
+                Id = ingredient.Id,
+                Name = ingredient.Name,
+                Quantity = ingredient.Quantity
+            };
+            
+            _context.Entry(ingred).State = EntityState.Modified;
 
             try
             {
@@ -84,13 +101,19 @@ namespace RecipeBook.Controllers
         // POST: api/Ingredients
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Ingredient>> PostIngredient(Ingredient ingredient)
+        public async Task<ActionResult<IngredientDTO>> PostIngredient(IngredientDTO ingredient)
         {
-          if (_context.Ingredients == null)
-          {
-              return Problem("Entity set 'RecipeBookContext.Ingredients'  is null.");
-          }
-            _context.Ingredients.Add(ingredient);
+            if (_context.Ingredients == null)
+            {
+                return Problem("Entity set 'RecipeBookContext.Ingredients'  is null.");
+            }
+            var ingred = new Ingredient
+            {
+                Id = ingredient.Id,
+                Name = ingredient.Name,
+                Quantity = ingredient.Quantity
+            };
+            _context.Ingredients.Add(ingred);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetIngredient", new { id = ingredient.Id }, ingredient);

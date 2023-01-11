@@ -24,44 +24,61 @@ namespace RecipeBook.Controllers
 
         // GET: api/Recipes
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Recipe>>> GetRecipes()
+        public async Task<ActionResult<IEnumerable<RecipeDTO>>> GetRecipes()
         {
           if (_context.Recipes == null)
           {
               return NotFound();
           }
-            return await _context.Recipes.Include(r => r.Author).ToListAsync();
+            var recipes = await _context.Recipes.ToListAsync();
+            var recipeDtos = new List<RecipeDTO>();
+            foreach (var recipe in recipes)
+            {
+                var dto = RecipeDTO.GetRecipeDTO(recipe);
+                recipeDtos.Add(dto);
+            }
+            return recipeDtos;
         }
 
         // GET: api/Recipes/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Recipe>> GetRecipe(int id)
+        public async Task<ActionResult<RecipeDetailDTO>> GetRecipe(int id)
         {
-          if (_context.Recipes == null)
-          {
-              return NotFound();
-          }
-            var recipe = await _context.Recipes.FindAsync(id);
+            if (_context.Recipes == null)
+            {
+                return NotFound();
+            }
+            var recipe = await _context.Recipes
+                .Include(r => r.Steps)
+                .Include(r => r.Ingredients)
+                .Include(r => r.Author)
+                .FirstOrDefaultAsync(r => r.Id == id);
 
             if (recipe == null)
             {
                 return NotFound();
             }
 
-            return recipe;
+            var rDto = RecipeDTO.GetRecipeDTO(recipe);
+
+            return Ok(rDto);
         }
 
         // PUT: api/Recipes/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutRecipe(int id, Recipe recipe)
+        public async Task<IActionResult> PutRecipe(int id, RecipeDTO recipe)
         {
             if (id != recipe.Id)
             {
                 return BadRequest();
             }
+            var recipeToUpdate = await _context.Recipes.FindAsync(id);
+            recipeToUpdate.Name = recipe.Name;
+            recipeToUpdate.Description = recipe.Description;
+            recipeToUpdate.PrepTime = recipe.PrepTime;
 
-            _context.Entry(recipe).State = EntityState.Modified;
+            //_context.Entry(recipeToUpdate).State = EntityState.Modified;
 
             try
             {
@@ -118,16 +135,23 @@ namespace RecipeBook.Controllers
         // POST: api/Recipes
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Recipe>> PostRecipe(Recipe recipe)
+        public async Task<ActionResult<RecipeDTO>> PostRecipe(RecipeDTO recipeDto)
         {
-          if (_context.Recipes == null)
-          {
-              return Problem("Entity set 'RecipeBookContext.Recipes'  is null.");
-          }
+            if (_context.Recipes == null)
+            {
+                return Problem("Entity set 'RecipeBookContext.Recipes'  is null.");
+            }
+            var recipe = new Recipe
+            {
+                Name = recipeDto.Name,
+                Description = recipeDto.Description,
+                PrepTime = recipeDto.PrepTime
+            };
+
             _context.Recipes.Add(recipe);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetRecipe", new { id = recipe.Id }, recipe);
+            return CreatedAtAction("GetRecipe", new { id = recipeDto.Id }, recipeDto);
         }
 
         [HttpPost("Author/{authorId}")]
