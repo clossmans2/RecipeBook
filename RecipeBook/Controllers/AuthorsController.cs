@@ -6,8 +6,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RecipeBook.Data;
+using RecipeBook.DTO;
 using RecipeBook.Models;
-
+//TODO: Add DTO 
 namespace RecipeBook.Controllers
 {
     [Route("api/[controller]")]
@@ -23,31 +24,42 @@ namespace RecipeBook.Controllers
 
         // GET: api/Authors
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Author>>> GetAuthors()
+        public async Task<ActionResult<IEnumerable<AuthorDTO>>> GetAuthors()
         {
-          if (_context.Authors == null)
-          {
-              return NotFound();
-          }
-            return await _context.Authors.ToListAsync();
+            if (_context.Authors == null)
+            {
+                return NotFound();
+            }
+            var authors = await _context.Authors.ToListAsync();
+            var authorsDTO = new List<AuthorDTO>();
+            foreach (var author in authors)
+            {
+                var dto = AuthorDTO.GetAuthorDTO(author);
+                authorsDTO.Add(dto);
+            }
+            return authorsDTO;
         }
 
         // GET: api/Authors/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Author>> GetAuthor(int id)
+        public async Task<ActionResult<AuthorDetailDTO>> GetAuthor(int id)
         {
-          if (_context.Authors == null)
-          {
-              return NotFound();
-          }
-            var author = await _context.Authors.FindAsync(id);
+            if (_context.Authors == null)
+            {
+                return NotFound();
+            }
+            var author = await _context.Authors
+                .Include(a => a.Recipes)
+                .FirstOrDefaultAsync(a => a.Id == id);
 
             if (author == null)
             {
                 return NotFound();
             }
 
-            return author;
+            var authorDto = AuthorDetailDTO.GetAuthorDetail(author, author.Recipes);
+
+            return authorDto;
         }
 
         // PUT: api/Authors/5

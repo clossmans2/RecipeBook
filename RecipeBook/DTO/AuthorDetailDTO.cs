@@ -7,21 +7,30 @@ using RecipeBook.Models;
 
 namespace RecipeBook.DTO
 {
-    public class AuthorDTO
+    public class AuthorDetailDTO
     {
         public int Id { get; set; }
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
-        
-        public static AuthorDTO GetAuthorDTO(Author author)
+
+        public ICollection<RecipeDTO> Recipes { get; set; } = new List<RecipeDTO>();
+
+        public static AuthorDetailDTO GetAuthorDetail(Author author, IEnumerable<Recipe> recipes)
         {
-            return new AuthorDTO
+            var recipeDTOList = new List<RecipeDTO>();
+            foreach (var recipe in recipes)
+            {
+                recipeDTOList.Add(RecipeDTO.GetRecipeDTO(recipe));
+            }
+
+            return new AuthorDetailDTO
             {
                 Id = author.Id,
                 FirstName = author.FirstName,
                 LastName = author.LastName,
-                Email = author.Email
+                Email = author.Email,
+                Recipes = recipeDTOList
             };
         }
     }
