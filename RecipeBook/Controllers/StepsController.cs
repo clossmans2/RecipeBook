@@ -111,6 +111,28 @@ namespace RecipeBook.Controllers
             return CreatedAtAction("GetStep", new { id = step.Id }, stepDto);
         }
 
+        // POST: api/Steps/1
+        [HttpPost("{recipeId}")]
+        public async Task<ActionResult<StepDTO>> PostStepToRecipe(int recipeId, StepDTO stepDto)
+        {
+            if (_context.Steps == null)
+            {
+                return Problem("Entity set 'RecipeBookContext.Steps'  is null.");
+            }
+            var recipe = await _context.Recipes.FindAsync(recipeId);
+            var step = new Step
+            {
+                Text = stepDto.Text,
+                Order = stepDto.Order,
+                Recipe = recipe,
+                RecipeId = recipe.Id
+            };
+            _context.Steps.Add(step);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction("GetStep", new { id = step.Id }, stepDto);
+        }
+
         // DELETE: api/Steps/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteStep(int id)

@@ -59,7 +59,7 @@ namespace RecipeBook.Controllers
                 return NotFound();
             }
 
-            var rDto = RecipeDTO.GetRecipeDTO(recipe);
+            var rDto = RecipeDetailDTO.GetRecipeDetail(recipe);
 
             return Ok(rDto);
         }
@@ -67,18 +67,13 @@ namespace RecipeBook.Controllers
         // PUT: api/Recipes/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutRecipe(int id, RecipeDTO recipe)
+        public async Task<IActionResult> PutRecipe(int id, Recipe recipe)
         {
             if (id != recipe.Id)
             {
                 return BadRequest();
             }
-            var recipeToUpdate = await _context.Recipes.FindAsync(id);
-            recipeToUpdate.Name = recipe.Name;
-            recipeToUpdate.Description = recipe.Description;
-            recipeToUpdate.PrepTime = recipe.PrepTime;
-
-            //_context.Entry(recipeToUpdate).State = EntityState.Modified;
+            _context.Entry(recipe).State = EntityState.Modified;
 
             try
             {
@@ -99,8 +94,9 @@ namespace RecipeBook.Controllers
             return NoContent();
         }
 
+        // PUT: api/Recipes/5/Author/1
         [HttpPut("{id}/Author/{authorId}")]
-        public async Task<IActionResult> PutRecipeAuthor(int id, int authorId)
+        public async Task<IActionResult> ChangeRecipeAuthor(int id, int authorId)
         {
             var recipe = await _context.Recipes.FindAsync(id);
             var author = await _context.Authors.FindAsync(authorId);
@@ -132,29 +128,9 @@ namespace RecipeBook.Controllers
             return NoContent();
         }
 
-        // POST: api/Recipes
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<RecipeDTO>> PostRecipe(RecipeDTO recipeDto)
-        {
-            if (_context.Recipes == null)
-            {
-                return Problem("Entity set 'RecipeBookContext.Recipes'  is null.");
-            }
-            var recipe = new Recipe
-            {
-                Name = recipeDto.Name,
-                Description = recipeDto.Description,
-                PrepTime = recipeDto.PrepTime
-            };
-
-            _context.Recipes.Add(recipe);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetRecipe", new { id = recipeDto.Id }, recipeDto);
-        }
-
-        [HttpPost("Author/{authorId}")]
+        
+        // POST: api/Recipes/1
+        [HttpPost("{authorId}")]
         public async Task<ActionResult<Recipe>> PostRecipeWithAuthor(int authorId, RecipeDTO recipeDto)
         {
             if (_context.Recipes == null)
